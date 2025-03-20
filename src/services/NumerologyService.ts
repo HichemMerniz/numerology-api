@@ -1,4 +1,4 @@
-import { NumerologyRepository } from "../repositories/NumerologyRepository";
+import { FileStorage } from '../utils/fileStorage';
 
 const letterToNumber: { [key: string]: number } = {
   A: 1, B: 2, C: 3, D: 4, E: 5, F: 6, G: 7, H: 8, I: 9,
@@ -34,16 +34,26 @@ function getSoulUrgeNumber(name: string): number {
 }
 
 export class NumerologyService {
-  static calculateNumerology(name: string, dob: string) {
-    const data = {
+  static async calculateNumerology(name: string, dob: string, userId?: string) {
+    const numerologyData = {
       name,
       dob,
       lifePath: getLifePathNumber(dob),
       expression: getExpressionNumber(name),
       soulUrge: getSoulUrgeNumber(name),
+      userId,
+      createdAt: new Date().toISOString()
     };
 
-    NumerologyRepository.saveCalculation(data);
-    return data;
+    // Save to file storage
+    const id = await FileStorage.saveNumerology(numerologyData);
+    return { id, ...numerologyData };
+  }
+
+  static async getUserNumerologyHistory(userId: string) {
+    const readings = await FileStorage.findNumerologyByUserId(userId);
+    return readings.sort((a, b) => 
+      new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+    ).slice(0, 10);
   }
 }

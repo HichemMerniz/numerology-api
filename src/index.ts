@@ -9,23 +9,15 @@ import helmet from "helmet";
 import morgan from "morgan";
 import rateLimit from "express-rate-limit";
 import config from "./config/config";
+import { FileStorage } from "./utils/fileStorage";
 import numerologyRoutes from "./routes/numerologyRoutes";
 import pdfRoutes from "./routes/pdfRoutes";
 import authRoutes from "./routes/authRoutes";
 
 const app = express();
 
-// Security Middleware
-app.use(helmet()); // Adds various HTTP headers for security
-app.use(
-    rateLimit({
-        windowMs: 15 * 60 * 1000, // 15 minutes
-        max: 100, // limit each IP to 100 requests per windowMs
-        message: { error: "Too many requests, please try again later." }
-    })
-);
-
-// CORS Configuration
+// Middleware
+app.use(helmet());
 app.use(cors({
     origin: config.corsOrigin,
     methods: ["GET", "POST"],
@@ -33,21 +25,20 @@ app.use(cors({
     maxAge: 86400 // 24 hours
 }));
 
+// Rate limiting
+app.use(
+    rateLimit({
+        windowMs: 15 * 60 * 1000, // 15 minutes
+        max: 100 // limit each IP to 100 requests per windowMs
+    })
+);
+
 // Logging Middleware
 if (config.nodeEnv === "development") {
     app.use(morgan("dev"));
 }
 
-// Body Parser Middleware
-app.use(express.json({ limit: "10kb" })); // Body limit is 10kb
-
-// API Version Prefix
-const API_PREFIX = "/api/v1";
-
-// Routes
-app.use(`${API_PREFIX}/auth`, authRoutes);
-app.use(`${API_PREFIX}/numerology`, numerologyRoutes);
-app.use(`${API_PREFIX}/pdf`, pdfRoutes);
+app.use(express.json({ limit: "10kb" }));
 
 // Health check endpoint
 app.get("/", (_req: Request, res: Response) => {
@@ -56,6 +47,19 @@ app.get("/", (_req: Request, res: Response) => {
         message: "Numerology API is running",
         version: "1.0.0",
         environment: config.nodeEnv
+    });
+});
+
+// Routes
+app.use('/api/auth', authRoutes);
+app.use('/api/numerology', numerologyRoutes);
+app.use('/api/pdf', pdfRoutes);
+
+// Handle undefined routes
+app.all("*", (req: Request, res: Response) => {
+    res.status(404).json({
+        status: "error",
+        message: `Cannot find ${req.originalUrl} on this server!`
     });
 });
 
@@ -99,29 +103,29 @@ app.use((err: AppError, _req: Request, res: Response, _next: NextFunction) => {
     }
 });
 
-// Handle undefined routes
-app.all("*", (req: Request, res: Response) => {
-    res.status(404).json({
-        status: "error",
-        message: `Cannot find ${req.originalUrl} on this server!`
-    });
-});
+// Initialize storage and start server
+const initializeApp = async () => {
+    try {
+        await FileStorage.initializeStorage();
+        console.log('✅ File storage initialized successfully');
 
-const server = app.listen(config.port, () => {
-    console.log(`
-    🚀 Server running in ${config.nodeEnv} mode on port ${config.port}
-    👉 Health check: http://localhost:${config.port}
-    👉 API endpoint: http://localhost:${config.port}${API_PREFIX}
-    `);
-});
+        // Start server
+        app.listen(config.port, () => {
+            console.log(`✅ Server is running on port ${config.port}`);
+        });
+    } catch (error) {
+        console.error('❌ Error initializing file storage:', error);
+        process.exit(1);
+    }
+};
+
+initializeApp();
 
 // Handle unhandled promise rejections
 process.on("unhandledRejection", (err: Error) => {
     console.log("UNHANDLED REJECTION! 💥 Shutting down...");
     console.log(err.name, err.message);
-    server.close(() => {
-        process.exit(1);
-    });
+    process.exit(1);
 });
 
 // Handle uncaught exceptions

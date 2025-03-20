@@ -1,12 +1,13 @@
 import bcrypt from "bcryptjs";
-import jwt, { SignOptions } from "jsonwebtoken";
-import { UserRepository } from "../repositories/UserRepository";
+import jwt, { SignOptions, Secret } from "jsonwebtoken";
 import config from "../config/config";
+import { FileStorage } from "../utils/fileStorage";
 
-interface User {
+interface UserData {
   id: string;
   email: string;
   password: string;
+  createdAt: string;
 }
 
 interface JWTPayload {
@@ -16,16 +17,24 @@ interface JWTPayload {
 
 export class AuthService {
   static async register(email: string, password: string) {
-    const existingUser = await UserRepository.findUserByEmail(email);
+    const existingUser = await FileStorage.findUserByEmail(email);
     if (existingUser) throw new Error("User already exists");
 
-    const hashedPassword = await bcrypt.hash(password, 10);
-    await UserRepository.saveUser(email, hashedPassword);
-    return { message: "User registered successfully" };
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+
+    const userData = {
+      email,
+      password: hashedPassword,
+      createdAt: new Date().toISOString()
+    };
+
+    const userId = await FileStorage.saveUser(userData);
+    return { message: "User registered successfully", userId };
   }
 
   static async login(email: string, password: string) {
-    const user = await UserRepository.findUserByEmail(email) as User;
+    const user = await FileStorage.findUserByEmail(email) as UserData | null;
     if (!user) throw new Error("Invalid credentials");
 
     const isValidPassword = await bcrypt.compare(password, user.password);
@@ -36,7 +45,16 @@ export class AuthService {
       email: user.email
     };
 
-    const token = jwt.sign(payload, config.jwtSecret);
+    const options: SignOptions = {
+      expiresIn: Number(config.tokenExpiration)
+    };
+
+    const token = jwt.sign(
+      payload,
+      config.jwtSecret as Secret,
+      options
+    );
+
     return { token };
   }
 }   
