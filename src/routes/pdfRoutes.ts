@@ -14,6 +14,16 @@ const handlePDFGeneration = (req: Request, res: Response, next: NextFunction): v
     PDFController.generatePDF(req, res).catch(next);
 };
 
+/**
+ * @route   GET /api/pdf/download/:filename
+ * @desc    Download generated PDF file
+ * @access  Private
+ */
+const handlePDFDownload = (req: Request, res: Response, next: NextFunction): void => {
+    PDFController.downloadPDF(req, res).catch(next);
+};
+
 router.post("/generate", authMiddleware, handlePDFGeneration);
+router.get("/download/:filename", authMiddleware, handlePDFDownload);
 
 export default router;

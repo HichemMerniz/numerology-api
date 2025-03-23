@@ -1,13 +1,34 @@
 import PDFDocument from "pdfkit";
 import fs from "fs";
+import path from "path";
+
+interface NumerologyData {
+  name: string;
+  dob: string;
+  lifePath: number;
+  expression: number;
+  soulUrge: number;
+}
 
 export class PDFService {
-  static generateNumerologyPDF(data: any, filename: string): string {
-    const doc = new PDFDocument();
-    const filePath = `/Users/hichemmerniz/Jobs/Project/belkacem project 01/Project/API/numerology-api/reports/${filename}`;
-    const stream = fs.createWriteStream(filePath);
-    
-    doc.pipe(stream);
+  private static readonly REPORTS_DIR = "/Users/hichemmerniz/Jobs/Project/belkacem project 01/Project/API/numerology-api/reports";
+
+  static async generateNumerologyPDF(data: NumerologyData, filename: string): Promise<string> {
+    // Ensure the reports directory exists
+    if (!fs.existsSync(this.REPORTS_DIR)) {
+      fs.mkdirSync(this.REPORTS_DIR, { recursive: true });
+    }
+
+    const filePath = path.join(this.REPORTS_DIR, filename);
+    const doc = new PDFDocument({
+      size: "A4",
+      margin: 50,
+      bufferPages: true,
+    });
+
+    // Create write stream
+    const writeStream = fs.createWriteStream(filePath);
+    doc.pipe(writeStream);
     
     doc.fontSize(20).text("Numerology Report", { align: "center" });
     doc.moveDown();
@@ -18,8 +39,10 @@ export class PDFService {
     doc.text(`Expression Number: ${data.expression}`);
     doc.text(`Soul Urge Number: ${data.soulUrge}`);
     
+    // Finalize the PDF
     doc.end();
 
+    // Return the absolute file path
     return filePath;
   }
 }
