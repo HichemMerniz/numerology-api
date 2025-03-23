@@ -25,7 +25,7 @@ const handleNumerology = (req: Request, res: Response, next: NextFunction): void
  * @access  Private
  */
 const handleNumerologyHistory = (req: Request, res: Response, next: NextFunction): void => {
-    // console.log("dekhal");
+    cons
     NumerologyController.getNumerologyHistory(req, res).catch(next);
 };
 

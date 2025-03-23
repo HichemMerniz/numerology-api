@@ -8,7 +8,7 @@ interface Config {
     nodeEnv: string;
     mongoUri: string;
     jwtSecret: string;
-    tokenExpiration: number;
+    tokenExpiration: ;
     corsOrigin: string;
     apiKey: string;
     logLevel: string;
@@ -21,7 +21,7 @@ const config: Config = {
     nodeEnv: process.env.NODE_ENV || 'development',
     mongoUri: process.env.MONGODB_URI || 'mongodb://localhost:27017/numerology',
     jwtSecret: process.env.JWT_SECRET || 'fallback_secret_key_do_not_use_in_production',
-    tokenExpiration: Number(process.env.TOKEN_EXPIRATION) || 1,
+    tokenExpiration: process.env.TOKEN_EXPIRATION || '1d',
     corsOrigin: process.env.CORS_ORIGIN || '*',
     apiKey: process.env.API_KEY || 'default_api_key',
     logLevel: process.env.LOG_LEVEL || 'info',

@@ -45,9 +45,9 @@ export class AuthService {
       email: user.email
     };
 
-    const options: SignOptions = {
-        expiresIn: `${config.tokenExpiration}d`
-    };
+    // const options: SignOptions = {
+    //     expiresIn: Number(config.tokenExpiration)
+    // };
 
     const token = jwt.sign(
       payload,
