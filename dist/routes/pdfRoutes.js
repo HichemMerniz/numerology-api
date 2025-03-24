@@ -18,12 +18,21 @@ const handlePDFGeneration = (req, res, next) => {
 };
 /**
  * @route   GET /api/pdf/download/:filename
- * @desc    Download generated PDF file
- * @access  Private
+ * @desc    Download generated PDF file by ID (without .pdf extension)
+ * @access  Public
  */
 const handlePDFDownload = (req, res, next) => {
     PDFController_1.PDFController.downloadPDF(req, res).catch(next);
 };
-router.post("/generate", authMiddleware_1.authMiddleware, handlePDFGeneration);
-router.get("/download/:filename", authMiddleware_1.authMiddleware, handlePDFDownload);
+/**
+ * @route   GET /api/reports/:id
+ * @desc    Serve generated PDF file by ID (without .pdf extension)
+ * @access  Public
+ */
+const handleServeReport = (req, res, next) => {
+    PDFController_1.PDFController.serveReport(req, res).catch(next);
+};
+router.post("/pdf/generate", authMiddleware_1.authMiddleware, handlePDFGeneration);
+router.get("/pdf/download/:filename", handlePDFDownload);
+router.get("/reports/:id", handleServeReport);
 exports.default = router;

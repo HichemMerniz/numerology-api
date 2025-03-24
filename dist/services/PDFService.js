@@ -36,4 +36,4 @@ class PDFService {
     }
 }
 exports.PDFService = PDFService;
-PDFService.REPORTS_DIR = "/Users/hichemmerniz/Jobs/Project/belkacem project 01/Project/API/numerology-api/reports";
+PDFService.REPORTS_DIR = "../../reports";

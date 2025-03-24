@@ -31,6 +31,7 @@ function getSoulUrgeNumber(name) {
 }
 class NumerologyService {
     static async calculateNumerology(name, dob, userId) {
+        // Create numerology data without ID first
         const numerologyData = {
             name,
             dob,
@@ -38,15 +39,63 @@ class NumerologyService {
             expression: getExpressionNumber(name),
             soulUrge: getSoulUrgeNumber(name),
             userId,
-            createdAt: new Date().toISOString()
+            createdAt: new Date().toISOString(),
+            pdfUrl: null // Will be updated after PDF generation
         };
-        // Save to file storage
+        // Save to file storage and get the ID
         const id = await fileStorage_1.FileStorage.saveNumerology(numerologyData);
-        return { id, ...numerologyData };
+        // Generate PDF and update URL
+        const pdfUrl = await fileStorage_1.FileStorage.generateNumerologyPDF(id, numerologyData);
+        console.log(pdfUrl);
+        const cleanedUrl = pdfUrl.replace(/api\/reports[\\/]/, ''); // Removes 'reports\' or 'reports/'
+        console.log(cleanedUrl);
+        const updatedData = { ...numerologyData, pdfUrl: cleanedUrl };
+        await fileStorage_1.FileStorage.updateNumerology(id, updatedData);
+        // Return the data with the ID included
+        return { id, ...updatedData };
     }
-    static async getUserNumerologyHistory(userId) {
+    static async getUserNumerologyHistory(userId, page = 1, limit = 10) {
         const readings = await fileStorage_1.FileStorage.findNumerologyByUserId(userId);
-        return readings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()).slice(0, 10);
+        // Sort by date descending
+        const sortedReadings = readings.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+        // Calculate pagination values
+        const totalItems = sortedReadings.length;
+        const totalPages = Math.ceil(totalItems / limit);
+        const startIndex = (page - 1) * limit;
+        const endIndex = startIndex + limit;
+        // Return paginated results and pagination metadata
+        return {
+            readings: sortedReadings.slice(startIndex, endIndex),
+            pagination: {
+                currentPage: page,
+                totalPages,
+                totalItems,
+                itemsPerPage: limit
+            }
+        };
+    }
+    static async deleteNumerologyReading(id, userId) {
+        if (!id) {
+            throw new Error('Reading ID is required');
+        }
+        const reading = await fileStorage_1.FileStorage.getNumerology(id);
+        if (!reading) {
+            throw new Error('Reading not found');
+        }
+        console.log(reading);
+        if (!reading.userId) {
+            throw new Error('Reading has no associated user');
+        }
+        console.log(reading.userId);
+        if (reading.userId !== userId) {
+            throw new Error('Unauthorized to delete this reading');
+        }
+        console.log("dekhal");
+        const success = await fileStorage_1.FileStorage.deleteNumerology(id);
+        if (!success) {
+            throw new Error('Failed to delete reading');
+        }
+        return { message: 'Reading deleted successfully', id };
     }
 }
 exports.NumerologyService = NumerologyService;

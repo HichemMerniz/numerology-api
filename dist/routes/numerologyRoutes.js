@@ -23,13 +23,24 @@ const handleNumerology = (req, res, next) => {
 /**
  * @route   GET /api/numerology/history
  * @desc    Get user's numerology calculation history
+ * @params  page - Page number (default: 1)
+ * @params  limit - Items per page (default: 10)
  * @access  Private
  */
 const handleNumerologyHistory = (req, res, next) => {
     // console.log("dekhal");
     NumerologyController_1.NumerologyController.getNumerologyHistory(req, res).catch(next);
 };
+/**
+ * @route   DELETE /api/numerology/:id
+ * @desc    Delete a single numerology reading by ID
+ * @access  Private
+ */
+const handleDeleteNumerology = (req, res, next) => {
+    NumerologyController_1.NumerologyController.deleteNumerologyReading(req, res).catch(next);
+};
 // Routes
 router.post("/", authMiddleware_1.authMiddleware, handleNumerology);
 router.get("/history", authMiddleware_1.authMiddleware, handleNumerologyHistory);
+router.delete("/:id", authMiddleware_1.authMiddleware, handleDeleteNumerology);
 exports.default = router;

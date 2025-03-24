@@ -22,7 +22,7 @@ const app = (0, express_1.default)();
 app.use((0, helmet_1.default)());
 app.use((0, cors_1.default)({
     origin: config_1.default.corsOrigin,
-    methods: ["GET", "POST"],
+    methods: ["GET", "POST", "DELETE", "PUT"],
     credentials: true,
     maxAge: 86400 // 24 hours
 }));
@@ -48,7 +48,7 @@ app.get("/", (_req, res) => {
 // Routes
 app.use('/api/auth', authRoutes_1.default);
 app.use('/api/numerology', numerologyRoutes_1.default);
-app.use('/api/pdf', pdfRoutes_1.default);
+app.use('/api', pdfRoutes_1.default);
 // Handle undefined routes
 app.all("*", (req, res) => {
     res.status(404).json({

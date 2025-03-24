@@ -39,20 +39,25 @@ class NumerologyController {
             return;
         }
         const userId = req.user.userId;
-        const history = await NumerologyService_1.NumerologyService.getUserNumerologyHistory(userId);
-        if (history.length === 0) {
+        // Get pagination parameters from query strings
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
+        const result = await NumerologyService_1.NumerologyService.getUserNumerologyHistory(userId, page, limit);
+        if (result.readings.length === 0) {
             res.json({
                 title: "Numerology History",
                 message: "No numerology history found",
-                readings: []
+                readings: [],
+                pagination: result.pagination
             });
             return;
         }
         // Transform the results to include readable names
-        const readings = history.map(reading => ({
+        const readings = result.readings.map(reading => ({
             id: reading.id,
             name: reading.name,
             dob: reading.dob,
+            pdfUrl: reading.pdfUrl,
             createdAt: reading.createdAt,
             readings: {
                 lifePath: {
@@ -71,8 +76,32 @@ class NumerologyController {
         }));
         res.json({
             title: "Numerology History",
-            readings
+            readings,
+            pagination: result.pagination
         });
+    }
+    static async deleteNumerologyReading(req, res) {
+        if (!req.user || !req.user.userId) {
+            res.status(401).json({ error: "Unauthorized access" });
+            return;
+        }
+        const { id } = req.params;
+        if (!id) {
+            res.status(400).json({ error: "Reading ID is required" });
+            return;
+        }
+        try {
+            const result = await NumerologyService_1.NumerologyService.deleteNumerologyReading(id, req.user.userId);
+            res.json(result);
+        }
+        catch (error) {
+            if (error instanceof Error) {
+                res.status(400).json({ error: error.message });
+            }
+            else {
+                res.status(500).json({ error: "An unexpected error occurred" });
+            }
+        }
     }
 }
 exports.NumerologyController = NumerologyController;
