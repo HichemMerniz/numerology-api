@@ -43,7 +43,7 @@ class PDFController {
                 });
                 return;
             }
-            const filePath = path_1.default.join(this.REPORTS_DIR, `${filename}.pdf`);
+            const filePath = path_1.default.join(this.REPORTS_DIR, `${filename}`);
             console.log("Attempting to download PDF from:", filePath);
             // Check if file exists
             if (!fs_1.default.existsSync(filePath)) {
